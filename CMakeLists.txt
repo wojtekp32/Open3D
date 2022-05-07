@@ -259,10 +259,11 @@ project(Open3D
 message(STATUS "Open3D ${OPEN3D_VERSION_FULL}")
 
 # Check SYCL compatiblility
-if (BUILD_SYCL_MODULE AND NOT CMAKE_CXX_COMPILER_ID MATCHES "IntelLLVM")
+if (BUILD_SYCL_MODULE AND ((NOT CMAKE_C_COMPILER_ID MATCHES "IntelLLVM")
+                        OR (NOT CMAKE_CXX_COMPILER_ID MATCHES "IntelLLVM")))
     message(FATAL_ERROR "BUILD_SYCL_MODULE requires IntelLLVM (DPC++) compiler, "
-                        "but got CMAKE_CXX_COMPILER_ID: ${CMAKE_CXX_COMPILER_ID} "
-                        "and CMAKE_CXX_COMPILER: ${CMAKE_CXX_COMPILER}.")
+                        "but got ${CMAKE_CXX_COMPILER_ID}. Please set: "
+                        "`-DCMAKE_C_COMPILER=icx -DCMAKE_CXX_COMPILER=icpx`")
 endif()
 if (BUILD_SYCL_MODULE AND (NOT UNIX OR APPLE))
     message(FATAL_ERROR "Open3D SYCL support is only available on Linux")
