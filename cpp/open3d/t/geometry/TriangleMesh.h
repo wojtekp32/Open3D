@@ -368,6 +368,15 @@ public:
     /// Convenience function.
     bool HasTriangleColors() const { return HasTriangleAttr("colors"); }
 
+    /// Create a sphere mesh centered at (0, 0, 0).
+    /// \param radius defines radius of the sphere.
+    /// \param resolution defines the resolution of the sphere. The longitudes
+    /// will be split into resolution segments (i.e. there are resolution + 1
+    /// latitude lines including the north and south pole). The latitudes will
+    /// be split into `2 * resolution segments (i.e. there are 2 * resolution
+    /// longitude lines.)
+    static TriangleMesh CreateSphere(double adius = 1.0, int resolution = 20);
+
 public:
     /// Clear all data in the trianglemesh.
     TriangleMesh &Clear() override {

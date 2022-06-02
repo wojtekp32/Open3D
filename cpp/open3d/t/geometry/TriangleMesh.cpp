@@ -38,6 +38,7 @@
 #include "open3d/core/ShapeUtil.h"
 #include "open3d/core/Tensor.h"
 #include "open3d/core/TensorCheck.h"
+#include "open3d/geometry/TriangleMesh.h"
 #include "open3d/t/geometry/PointCloud.h"
 #include "open3d/t/geometry/kernel/PointCloud.h"
 #include "open3d/t/geometry/kernel/Transform.h"
@@ -310,6 +311,46 @@ TriangleMesh TriangleMesh::ClipPlane(const core::Tensor &point,
     cleaner->Update();
     auto clipped_polydata = cleaner->GetOutput();
     return CreateTriangleMeshFromVtkPolyData(clipped_polydata);
+}
+
+TriangleMesh TriangleMesh::CreateSphere(double radius, int resolution) {
+    // std::shared_ptr<open3d::geometry::TriangleMesh> legacy_mesh =
+    //         open3d::geometry::TriangleMesh::CreateSphere(radius, resolution);
+    // TriangleMesh mesh = TriangleMesh::FromLegacy(*legacy_mesh);
+
+    if (radius <= 0) {
+        utility::LogError("radius <= 0");
+    }
+    if (resolution <= 0) {
+        utility::LogError("resolution <= 0");
+    }
+
+    int n_vertices = 2 * resolution * (resolution - 1) + 2;
+    core::Dtype float_dtype = core::Float32;
+    // core::Dtype int_dtype = core::Int64;
+    core::Tensor vertex_positions({n_vertices, 3}, float_dtype);
+
+    // Method 1 (recommended)
+    // Fill the 0-th point
+    float *vertex_buf = vertex_positions.GetDataPtr<float>();
+    vertex_buf[0 * 3 + 0] = 1.0f;
+    vertex_buf[0 * 3 + 1] = 2.0f;
+    vertex_buf[0 * 3 + 2] = 3.0f;
+
+    // Method 2
+    // cpp/tests/core/Tensor.cpp
+    vertex_positions[0] = core::Tensor::Init<float>({1, 2, 3});
+
+    // Method 3
+    vertex_positions[0][0] = 1.0f;
+    vertex_positions[0][1] = 2.0f;
+    vertex_positions[0][2] = 3.0f;
+
+    // // int n_triangles = XXX;
+    // core::Tensor triangle_indices;
+
+    TriangleMesh mesh;
+    return mesh;
 }
 
 }  // namespace geometry

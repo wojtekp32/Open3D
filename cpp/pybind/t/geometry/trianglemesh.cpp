@@ -30,6 +30,7 @@
 #include <unordered_map>
 
 #include "open3d/core/CUDAUtils.h"
+#include "pybind/docstring.h"
 #include "pybind/t/geometry/geometry.h"
 
 namespace open3d {
@@ -221,6 +222,19 @@ This example shows how to create a hemisphere from a sphere::
 
     o3d.visualization.draw(hemisphere)
 )");
+
+    triangle_mesh.def_static("create_sphere", &TriangleMesh::CreateSphere,
+                             "Create a sphere mesh centered at (0, 0, 0).",
+                             "radius"_a = 1.0, "resolution"_a = 20);
+    docstring::ClassMethodDocInject(
+            m, "TriangleMesh", "create_sphere",
+            {{"radius", "Defines radius of the sphere."},
+             {"resolution",
+              "Defines the resolution of the sphere. The longitudes will be "
+              "split into resolution segments (i.e. there are resolution + 1 "
+              "latitude lines including the north and south pole). The "
+              "latitudes will be split into 2 * resolution segments (i.e. "
+              "there are 2 * resolution longitude lines."}});
 }
 
 }  // namespace geometry

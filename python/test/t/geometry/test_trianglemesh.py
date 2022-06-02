@@ -35,3 +35,27 @@ def test_clip_plane():
     clipped_cube = cube.clip_plane(point=[0.5, 0, 0], normal=[1, 0, 0])
     assert clipped_cube.vertex['positions'].shape == (12, 3)
     assert clipped_cube.triangle['indices'].shape == (14, 3)
+
+
+def test_create_sphere():
+    print("hello")
+    # Legacy sphere creation
+    #
+    # In build/ directory, run:
+    # ```
+    # make install-pip-package -j10
+    # pytest ../python/test/t/geometry/test_trianglemesh.py::test_create_sphere -s
+    # ```
+
+    # Test legacy
+    # sphere = o3d.geometry.TriangleMesh.create_sphere(radius=1)
+    # sphere.compute_vertex_normals()
+    # o3d.visualization.draw([sphere], raw_mode=True)
+
+    # To implement
+    sphere = o3d.t.geometry.TriangleMesh.create_sphere(radius=1)
+    o3d.visualization.draw([sphere], raw_mode=True)
+
+    legacy_sphere = sphere.to_legacy()
+    legacy_sphere.compute_vertex_normals()
+    o3d.visualization.draw([legacy_sphere], raw_mode=True)
