@@ -24,15 +24,17 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-/// \file SYCLUtils.h
-/// \brief Common SYCL utilities
+/// \file SYCLQueue.h
+/// \brief SYCL queue manager.
 ///
-/// SYCLUtils.h and SYCLUtils.cpp should compile when BUILD_SYCL_MODULE=ON or
-/// BUILD_SYCL_MODULE=OFF. Use macros for conditional compilation.
+/// Unlike from SYCLUtils.h, SYCLQueue.h shall only be included by source files
+/// that are compiled with SYCL flags. Other generic source files (e.g.,
+/// Device.cpp) shall not include this file.
 
 #pragma once
 
-#include <vector>
+#include <CL/sycl.hpp>
+#include <unordered_map>
 
 #include "open3d/core/Device.h"
 
@@ -40,24 +42,23 @@ namespace open3d {
 namespace core {
 namespace sycl_utils {
 
-/// Runs simple SYCL test program for sanity checks.
-/// \return Retuns 0 if successful.
-int SYCLDemo();
+using namespace sycl;
 
-/// Print available SYCL devices.
-///
-/// \param print_all If true, prints all SYCL devices. Otherwise, prints only
-/// devices that are available for Open3D.
-void PrintSYCLDevices(bool print_all = false);
+/// Singleton SYCL context manager. It maintains:
+/// - A default queue for each SYCL device
+class SYCLQueue {
+public:
+    SYCLQueue(SYCLQueue const&) = delete;
+    void operator=(SYCLQueue const&) = delete;
+    static SYCLQueue& GetInstance();
+    sycl::queue GetDefaultQueue(const Device& device);
+    sycl::device DeviceToSYCLDevice(const Device& device);
 
-/// Returns true if there is at least one SYCL device available.
-bool IsAvailable();
-
-/// Returns true if the specified SYCL device is available.
-bool IsDeviceAvailable(const Device& device);
-
-/// Return a list of available SYCL devices.
-std::vector<Device> GetAvailableSYCLDevices();
+private:
+    SYCLQueue();
+    std::unordered_map<Device, sycl::queue> device_to_default_queue_;
+    std::unordered_map<Device, sycl::device> device_to_sycl_device_;
+};
 
 }  // namespace sycl_utils
 }  // namespace core

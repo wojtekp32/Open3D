@@ -30,61 +30,16 @@
 
 #include "open3d/core/Device.h"
 #include "open3d/core/MemoryManager.h"
+#include "open3d/core/SYCLQueue.h"
 #include "open3d/core/SYCLUtils.h"
 #include "open3d/utility/Logging.h"
 
 namespace open3d {
 namespace core {
 
-using namespace cl;
-
-/// Singleton SYCL context manager. For each SYCL device, maintains a default
-/// queue.
-class SYCLContextManager {
-public:
-    SYCLContextManager(SYCLContextManager const&) = delete;
-    void operator=(SYCLContextManager const&) = delete;
-
-    static SYCLContextManager& GetInstance() {
-        static thread_local SYCLContextManager instance;
-        return instance;
-    }
-
-    sycl::queue GetDefaultQueue(const Device& device) {
-        auto it = device_to_default_queue_.find(device);
-        if (it == device_to_default_queue_.end()) {
-            device_to_default_queue_[device] =
-                    sycl::queue(DeviceToSYCLDevice(device));
-        }
-        return device_to_default_queue_[device];
-    }
-
-    sycl::device DeviceToSYCLDevice(const Device& device) {
-        auto it = device_to_sycl_device_.find(device);
-        if (it == device_to_sycl_device_.end()) {
-            if (!sycl_utils::IsDeviceAvailable(device)) {
-                utility::LogError("SYCL Device {} is not available.",
-                                  device.ToString());
-            }
-            try {
-                return sycl::device(sycl::gpu_selector());
-            } catch (const sycl::exception& e) {
-                utility::LogError("Failed to create SYCL queue for device: {}.",
-                                  device.ToString());
-            }
-        }
-        return device_to_sycl_device_[device];
-    }
-
-private:
-    SYCLContextManager() {}
-    std::unordered_map<Device, sycl::queue> device_to_default_queue_;
-    std::unordered_map<Device, sycl::device> device_to_sycl_device_;
-};
-
 void* MemoryManagerSYCL::Malloc(size_t byte_size, const Device& device) {
     const sycl::queue& queue =
-            SYCLContextManager::GetInstance().GetDefaultQueue(device);
+            sycl_utils::SYCLQueue::GetInstance().GetDefaultQueue(device);
 
 #ifdef ENABLE_SYCL_UNIFIED_SHARED_MEMORY
     return static_cast<void*>(sycl::malloc_shared(byte_size, queue));
@@ -96,7 +51,7 @@ void* MemoryManagerSYCL::Malloc(size_t byte_size, const Device& device) {
 void MemoryManagerSYCL::Free(void* ptr, const Device& device) {
     if (ptr) {
         const sycl::queue& queue =
-                SYCLContextManager::GetInstance().GetDefaultQueue(device);
+                sycl_utils::SYCLQueue::GetInstance().GetDefaultQueue(device);
         sycl::free(ptr, queue);
     }
 }
@@ -122,7 +77,7 @@ void MemoryManagerSYCL::Memcpy(void* dst_ptr,
                           dst_device.ToString());
     }
 
-    sycl::queue queue = SYCLContextManager::GetInstance().GetDefaultQueue(
+    sycl::queue queue = sycl_utils::SYCLQueue::GetInstance().GetDefaultQueue(
             device_with_queue);
     queue.memcpy(dst_ptr, src_ptr, num_bytes).wait_and_throw();
 }

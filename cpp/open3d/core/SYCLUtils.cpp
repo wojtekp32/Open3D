@@ -48,9 +48,63 @@ namespace open3d {
 namespace core {
 namespace sycl_utils {
 
-#ifdef BUILD_SYCL_MODULE
 using namespace cl;
+
+class SYCLContext {
+public:
+    SYCLContext(SYCLContext const &) = delete;
+    void operator=(SYCLContext const &) = delete;
+    static SYCLContext &GetInstance() {
+        static thread_local SYCLContext instance;
+        return instance;
+    }
+    static bool IsAvailable() {
+#ifdef BUILD_SYCL_MODULE
+        return GetAvailableSYCLDevices().size() > 0;
+#else
+        return false;
 #endif
+    }
+    static bool IsDeviceAvailable(const Device &device) {
+        bool rc = false;
+        for (const Device &device_ : GetInstance().devices_) {
+            if (device == device_) {
+                rc = true;
+                break;
+            }
+        }
+        return rc;
+    }
+    static std::vector<Device> GetAvailableSYCLDevices() {
+        return GetInstance().devices_;
+    }
+
+private:
+    SYCLContext() {
+#ifdef BUILD_SYCL_MODULE
+        // This function will ony be called once as SYCLContext is a singleton.
+        try {
+            const sycl::device &device = sycl::device(sycl::gpu_selector());
+            devices_.push_back(Device("SYCL:0"));
+        } catch (const sycl::exception &e) {
+        }
+        // Fall back to SYCL host device if SYCL GPU device is not available.
+        // This could happen if the Intel GPGPU driver is not installed.
+        try {
+            const sycl::device &device = sycl::device(sycl::host_selector());
+            devices_.push_back(Device("SYCL:0"));
+            utility::LogWarning(
+                    "SYCL GPU device is not available, falling back to SYCL "
+                    "host device. Typically, SYCL host is only used for "
+                    "debugging.");
+        } catch (const sycl::exception &e) {
+        }
+#else
+        devices_ = {};
+#endif
+    }
+    std::vector<Device> devices_;
+};
 
 int SYCLDemo() {
 #ifdef BUILD_SYCL_MODULE
@@ -222,36 +276,14 @@ void PrintSYCLDevices(bool print_all) {
 #endif
 }
 
-bool IsAvailable() {
-#ifdef BUILD_SYCL_MODULE
-    return GetAvailableSYCLDevices().size() > 0;
-#else
-    return false;
-#endif
-}
+bool IsAvailable() { return SYCLContext::GetInstance().IsAvailable(); }
 
 bool IsDeviceAvailable(const Device &device) {
-    std::vector<Device> devices = GetAvailableSYCLDevices();
-    for (const Device &dev : devices) {
-        if (dev == device) {
-            return true;
-        }
-    }
-    return false;
+    return SYCLContext::GetInstance().IsDeviceAvailable(device);
 }
 
 std::vector<Device> GetAvailableSYCLDevices() {
-#ifdef BUILD_SYCL_MODULE
-    std::vector<Device> devices;
-    try {
-        const sycl::device &device = sycl::device(sycl::gpu_selector());
-        devices.push_back(Device("SYCL:0"));
-    } catch (const sycl::exception &e) {
-    }
-    return devices;
-#else
-    return {};
-#endif
+    return SYCLContext::GetInstance().GetAvailableSYCLDevices();
 }
 
 }  // namespace sycl_utils

@@ -24,40 +24,52 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-/// \file SYCLUtils.h
-/// \brief Common SYCL utilities
-///
-/// SYCLUtils.h and SYCLUtils.cpp should compile when BUILD_SYCL_MODULE=ON or
-/// BUILD_SYCL_MODULE=OFF. Use macros for conditional compilation.
+#include "open3d/core/SYCLQueue.h"
 
-#pragma once
+#include <CL/sycl.hpp>
+#include <array>
+#include <cstdlib>
+#include <sstream>
 
-#include <vector>
-
-#include "open3d/core/Device.h"
+#include "open3d/core/SYCLUtils.h"
+#include "open3d/utility/Logging.h"
 
 namespace open3d {
 namespace core {
 namespace sycl_utils {
 
-/// Runs simple SYCL test program for sanity checks.
-/// \return Retuns 0 if successful.
-int SYCLDemo();
+sycl::queue SYCLQueue::GetDefaultQueue(const Device &device) {
+    auto it = device_to_default_queue_.find(device);
+    if (it == device_to_default_queue_.end()) {
+        device_to_default_queue_[device] =
+                sycl::queue(DeviceToSYCLDevice(device));
+    }
+    return device_to_default_queue_[device];
+}
 
-/// Print available SYCL devices.
-///
-/// \param print_all If true, prints all SYCL devices. Otherwise, prints only
-/// devices that are available for Open3D.
-void PrintSYCLDevices(bool print_all = false);
+sycl::device SYCLQueue::DeviceToSYCLDevice(const Device &device) {
+    auto it = device_to_sycl_device_.find(device);
+    if (it == device_to_sycl_device_.end()) {
+        if (!sycl_utils::IsDeviceAvailable(device)) {
+            utility::LogError("SYCL Device {} is not available.",
+                              device.ToString());
+        }
+        try {
+            return sycl::device(sycl::gpu_selector());
+        } catch (const sycl::exception &e) {
+            utility::LogError("Failed to create SYCL queue for device: {}.",
+                              device.ToString());
+        }
+    }
+    return device_to_sycl_device_[device];
+}
 
-/// Returns true if there is at least one SYCL device available.
-bool IsAvailable();
+SYCLQueue &SYCLQueue::GetInstance() {
+    static thread_local SYCLQueue instance;
+    return instance;
+}
 
-/// Returns true if the specified SYCL device is available.
-bool IsDeviceAvailable(const Device& device);
-
-/// Return a list of available SYCL devices.
-std::vector<Device> GetAvailableSYCLDevices();
+SYCLQueue::SYCLQueue() {}
 
 }  // namespace sycl_utils
 }  // namespace core
