@@ -17,7 +17,7 @@ referring to "DPC++".
 ## Setup
 
 1. Install oneAPI for Linux: [install via apt-get](https://www.intel.com/content/www/us/en/develop/documentation/installation-guide-for-intel-oneapi-toolkits-linux/top/installation/install-using-package-managers/apt.html)
-2. Install Intel GPGPU driver: [install for Ubuntu 20.04](https://dgpu-docs.intel.com/installation-guides/ubuntu/ubuntu-focal.html)
+2. Install Intel GPGPU driver: [GPGPU installation guide](https://dgpu-docs.intel.com/installation-guides/index.html)
 3. Prepare environment
    ```bash
    # Source environments
@@ -72,13 +72,18 @@ $ sycl-ls
 ```
 
 Open3D is designed to make use of the SYCL GPU devices.
-`core::Device("SYCL:0")` maps the default SYCL GPU returned by
-`sycl::gpu_selector()`.
-- For Intel GPUs, the "level-zero GPU" (`ext_oneapi_level_zero:gpu:0` in the
-  example above) backend will be used by default instead of the "OpenCL GPU"
-  (`opencl:gpu:2` in the example above).
-- Currently we only support one SYCL GPU. Multi-GPU support will be added in
-  the future.
+- `core::Device("SYCL:0")` maps the default SYCL GPU returned by
+  `sycl::gpu_selector()`.
+  - For Intel GPUs, the "level-zero GPU" (`ext_oneapi_level_zero:gpu:0` in the
+    example above) backend will be used by default instead of the "OpenCL GPU"
+    (`opencl:gpu:2` in the example above).
+  - Currently we only support one SYCL GPU. Multi-GPU support will be added in
+    the future.
+- If SYCL GPU device is not available (e.g. when you don't have an Intel
+  integrated or discrete GPU, or when the
+  [GPGPU driver]((https://dgpu-docs.intel.com/installation-guides/index.html))
+  is not properly installed), `SYCL:0` will fall back to the SYCL host device.
+  The SYCL host device is used for debugging only.
 
 ## Known limitations/requirement
 
