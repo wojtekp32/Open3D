@@ -48,7 +48,9 @@ namespace open3d {
 namespace core {
 namespace sycl_utils {
 
+#ifdef BUILD_SYCL_MODULE
 using namespace cl;
+#endif
 
 class SYCLContext {
 public:
