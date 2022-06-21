@@ -72,13 +72,13 @@ $ sycl-ls
 ```
 
 Open3D is designed to make use of the SYCL GPU devices.
-- `core::Device("SYCL:0")` maps the default SYCL GPU returned by
-  `sycl::gpu_selector()`.
-  - For Intel GPUs, the "level-zero GPU" (`ext_oneapi_level_zero:gpu:0` in the
-    example above) backend will be used by default instead of the "OpenCL GPU"
-    (`opencl:gpu:2` in the example above).
-  - Currently we only support one SYCL GPU. Multi-GPU support will be added in
-    the future.
+`core::Device("SYCL:0")` maps the default SYCL GPU returned by
+`sycl::gpu_selector()`.
+- For Intel GPUs, the "level-zero GPU" (`ext_oneapi_level_zero:gpu:0` in the
+  example above) backend will be used by default instead of the "OpenCL GPU"
+  (`opencl:gpu:2` in the example above).
+- Currently we only support one SYCL GPU. Multi-GPU support will be added in
+  the future.
 
 ## Known limitations/requirement
 
